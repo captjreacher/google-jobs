@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>West Auckland — Web Gap Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Bebas+Neue&family=Special+Elite&family=Pacifico&family=Oswald:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=EB+Garamond:ital@0;1&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:#0d0d0f;color:#f4f4f2;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  img{display:block;max-width:100%}
+
+  /* ============ VIEW-SWAP MECHANICS ============ */
+  .view{display:none;min-height:100vh}
+  .view.show{display:block;padding-top:52px}
+  body.viewing{overflow-x:hidden}
+  .backbar{position:fixed;top:0;left:0;right:0;height:52px;z-index:900;display:none;
+    align-items:center;gap:16px;padding:0 18px;background:rgba(13,13,15,.92);
+    backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.1)}
+  .backbar.show{display:flex}
+  .backbar button{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.86rem;
+    background:#C9F24D;color:#0d0d0f;border:none;border-radius:999px;padding:8px 16px;cursor:pointer;
+    transition:transform .15s ease}
+  .backbar button:hover{transform:translateX(-3px)}
+  .backbar .bt{font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:.9rem;color:#f4f4f2;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .backbar .bv{margin-left:auto;font-size:.8rem;color:#9a9a9a;text-decoration:none;
+    border:1px solid rgba(255,255,255,.18);padding:6px 13px;border-radius:999px;white-space:nowrap}
+  .backbar .bv:hover{color:#fff;border-color:rgba(255,255,255,.4)}
+
+  /* ============ DASHBOARD ============ */
+  #board{max-width:1220px;margin:0 auto;padding:46px 22px 80px}
+  .op-top{display:flex;align-items:center;gap:12px;margin-bottom:40px}
+  .op-logo{font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.02em;font-size:1.02rem}
+  .op-logo b{color:#C9F24D}
+  .op-topmeta{margin-left:auto;font-size:.78rem;color:#7c7c80;letter-spacing:.04em}
+  .op-hero{max-width:820px;margin-bottom:34px}
+  .op-eyebrow{font-family:'Space Grotesk',sans-serif;font-size:.74rem;font-weight:600;letter-spacing:.24em;
+    text-transform:uppercase;color:#C9F24D;margin-bottom:18px}
+  .op-hero h1{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(2.1rem,5vw,3.6rem);
+    line-height:1.02;letter-spacing:-.02em;margin-bottom:18px}
+  .op-hero h1 em{font-style:normal;color:#8a8a8f}
+  .op-hero p{font-size:1.02rem;line-height:1.6;color:#b9b9bd;max-width:640px}
+  .op-strip{display:flex;flex-wrap:wrap;gap:26px;margin:30px 0 12px;padding:18px 0;
+    border-top:1px solid rgba(255,255,255,.09);border-bottom:1px solid rgba(255,255,255,.09)}
+  .op-stat .n{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.5rem}
+  .op-stat .n .u{font-size:.9rem;color:#7c7c80;font-weight:500}
+  .op-stat .l{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:#7c7c80;margin-top:3px}
+  .op-legend{display:flex;flex-wrap:wrap;gap:20px;margin:24px 0 34px;font-size:.8rem;color:#b9b9bd}
+  .op-legend span{display:inline-flex;align-items:center;gap:8px}
+  .dotg{width:9px;height:9px;border-radius:50%;background:#ffc24b;box-shadow:0 0 8px rgba(255,194,75,.6)}
+  .dotr{width:9px;height:9px;border-radius:2px;background:#ff5b5b}
+  .dota{width:9px;height:9px;border-radius:2px;background:#ffab3d}
+
+  .op-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
+  .op-card{background:#161619;border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden;
+    display:flex;flex-direction:column;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+  .op-card:hover{transform:translateY(-4px);border-color:rgba(201,242,77,.4);box-shadow:0 18px 40px -20px rgba(0,0,0,.8)}
+  .op-shot{position:relative;aspect-ratio:16/10.2;background:#0d0d0f;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.07)}
+  .op-chrome{position:absolute;top:0;left:0;right:0;height:30px;background:#242428;display:flex;align-items:center;
+    gap:7px;padding:0 11px;z-index:3;border-bottom:1px solid rgba(0,0,0,.4)}
+  .op-chrome .cd{display:flex;gap:5px}
+  .op-chrome .cd i{width:9px;height:9px;border-radius:50%;background:#4a4a50;display:block}
+  .op-chrome .addr{font-size:.68rem;color:#a2a2a8;background:#161619;border-radius:5px;padding:3px 10px;
+    margin-left:6px;font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .op-shotimg{position:absolute;inset:30px 0 0 0;background-size:cover;background-position:top center;filter:saturate(.96)}
+  .op-wbadge{position:absolute;bottom:10px;left:10px;z-index:4;font-size:.66rem;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;padding:5px 10px;border-radius:6px;font-family:'Space Grotesk',sans-serif}
+  .op-wbadge.old{background:#ffab3d;color:#3a2500}
+  .op-wbadge.no{background:#ff5b5b;color:#3a0000}
+  .op-none{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:repeating-linear-gradient(45deg,#161619,#161619 11px,#1b1b1f 11px,#1b1b1f 22px)}
+  .op-none .g{font-size:2.1rem;opacity:.5}
+  .op-none .t{font-family:'Space Grotesk',sans-serif;font-weight:600;color:#8a8a90;letter-spacing:.04em}
+  .op-b{padding:17px 18px 20px;display:flex;flex-direction:column;flex:1}
+  .op-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.16rem;letter-spacing:-.01em}
+  .op-cat{font-size:.78rem;color:#8a8a90;margin-top:3px;letter-spacing:.02em}
+  .op-rev{display:flex;align-items:center;gap:11px;margin:16px 0 18px}
+  .op-revnum{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.15rem;color:#ffc24b;
+    background:rgba(255,194,75,.11);border:1px solid rgba(255,194,75,.28);border-radius:9px;padding:6px 11px;white-space:nowrap}
+  .op-revtxt .lab{font-size:.74rem;font-weight:600;color:#e7e7e4;letter-spacing:.03em}
+  .op-revtxt .cnt{font-size:.72rem;color:#8a8a90;margin-top:1px}
+  .op-btn{margin-top:auto;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:.9rem;background:#C9F24D;color:#0d0d0f;
+    border:none;border-radius:10px;padding:12px;cursor:pointer;transition:background .15s ease,letter-spacing .15s ease;width:100%}
+  .op-btn:hover{background:#d8ff62;letter-spacing:.02em}
+  .op-foot{max-width:760px;margin:56px auto 0;text-align:center;font-size:.76rem;line-height:1.7;color:#6e6e73}
+  .op-foot b{color:#9a9a9f;font-weight:600}
+
+  /* ================================================================
+     REBUILD 1 — BURNT BUTTER DINER  (#v-diner) — retro printed menu
+     ================================================================ */
+  #v-diner{background:#f6ead2;color:#2a1d10;font-family:'Special Elite',serif}
+  #v-diner .dn-wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  #v-diner .dn-hero{position:relative;height:min(74vh,560px);overflow:hidden;background:#2a1d10}
+  #v-diner .dn-hero img{width:100%;height:100%;object-fit:cover;opacity:.82}
+  #v-diner .dn-hero .dn-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(42,29,16,.25),rgba(42,29,16,.72))}
+  #v-diner .dn-heroin{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#f6ead2;padding:20px}
+  #v-diner .dn-kicker{font-family:'Bebas Neue',sans-serif;letter-spacing:.42em;font-size:1rem;margin-bottom:6px;color:#f2c14e}
+  #v-diner .dn-name{font-family:'Pacifico',cursive;font-size:clamp(3rem,10vw,6.6rem);line-height:.95;color:#fff;text-shadow:0 6px 30px rgba(0,0,0,.5)}
+  #v-diner .dn-sub{font-family:'Bebas Neue',sans-serif;letter-spacing:.24em;font-size:clamp(1rem,2.4vw,1.5rem);margin-top:14px;color:#f6ead2}
+  #v-diner .dn-stamp{position:absolute;top:26px;right:26px;width:118px;height:118px;border-radius:50%;
+    border:3px solid #f2c14e;color:#f2c14e;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    transform:rotate(-13deg);font-family:'Bebas Neue',sans-serif;text-align:center;line-height:1;background:rgba(42,29,16,.25)}
+  #v-diner .dn-stamp b{font-size:1.9rem;letter-spacing:.06em}
+  #v-diner .dn-stamp span{font-size:.62rem;letter-spacing:.18em;margin-top:5px}
+  #v-diner .dn-bar{background:#7a1f12;color:#f6ead2;text-align:center;padding:13px;font-family:'Bebas Neue',sans-serif;
+    letter-spacing:.22em;font-size:1.05rem}
+  #v-diner .dn-bar b{color:#f2c14e}
+  #v-diner section{padding:60px 0}
+  #v-diner .dn-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,5vw,3rem);letter-spacing:.06em;text-align:center;margin-bottom:8px}
+  #v-diner .dn-rule{width:70px;height:4px;background:#7a1f12;margin:0 auto 40px;border-radius:3px}
+  #v-diner .dn-menu{max-width:720px;margin:0 auto}
+  #v-diner .dn-mcat{font-family:'Bebas Neue',sans-serif;letter-spacing:.2em;font-size:1.5rem;color:#7a1f12;
+    margin:34px 0 14px;padding-bottom:6px;border-bottom:2px dashed #c9a97a}
+  #v-diner .dn-item{display:flex;align-items:baseline;gap:10px;margin:15px 0}
+  #v-diner .dn-item .nm{font-size:1rem;color:#2a1d10}
+  #v-diner .dn-item .nm small{display:block;font-family:'Inter',sans-serif;font-size:.78rem;color:#7c6a52;margin-top:3px;letter-spacing:0}
+  #v-diner .dn-item .dots{flex:1;border-bottom:2px dotted #b79d78;transform:translateY(-4px)}
+  #v-diner .dn-item .pr{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;color:#7a1f12}
+  #v-diner .dn-cta{background:#2a1d10;color:#f6ead2;text-align:center;padding:60px 22px}
+  #v-diner .dn-cta h3{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.8rem,4.5vw,2.8rem);letter-spacing:.05em;margin-bottom:16px;color:#f2c14e}
+  #v-diner .dn-order{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  #v-diner .dn-order a{font-family:'Bebas Neue',sans-serif;letter-spacing:.14em;font-size:1.15rem;padding:14px 30px;border-radius:8px;text-decoration:none;cursor:pointer}
+  #v-diner .dn-order .p{background:#f2c14e;color:#2a1d10}
+  #v-diner .dn-order .s{background:transparent;color:#f6ead2;border:2px solid #f6ead2}
+  #v-diner .dn-split{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:stretch}
+  #v-diner .dn-split img{width:100%;height:100%;min-height:320px;object-fit:cover}
+  #v-diner .dn-splitx{background:#efe0c2;padding:50px 40px;display:flex;flex-direction:column;justify-content:center}
+  #v-diner .dn-quote{font-family:'EB Garamond',serif;font-style:italic;font-size:1.4rem;line-height:1.5;color:#3a2a18}
+  #v-diner .dn-qby{font-family:'Bebas Neue',sans-serif;letter-spacing:.16em;margin-top:16px;color:#7a1f12}
+  #v-diner .dn-foot{background:#7a1f12;color:#e9cfa6;text-align:center;padding:30px 22px;font-family:'Inter',sans-serif;font-size:.76rem;line-height:1.7}
+  @media(max-width:720px){#v-diner .dn-split{grid-template-columns:1fr}#v-diner .dn-stamp{width:88px;height:88px}#v-diner .dn-stamp b{font-size:1.4rem}}
+
+  /* ================================================================
+     REBUILD 2 — SWANSON WORX (#v-auto) — dark industrial work-order
+     ================================================================ */
+  #v-auto{background:#121417;color:#e9edf0;font-family:'Oswald',sans-serif;font-weight:300}
+  #v-auto .sw-hz{height:12px;background:repeating-linear-gradient(45deg,#f5b301,#f5b301 18px,#121417 18px,#121417 36px)}
+  #v-auto .sw-wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  #v-auto .sw-nav{display:flex;align-items:center;gap:18px;padding:20px 22px;max-width:1120px;margin:0 auto}
+  #v-auto .sw-brand{font-family:'Oswald',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:.14em;text-transform:uppercase}
+  #v-auto .sw-brand b{color:#f5b301}
+  #v-auto .sw-navl{margin-left:auto;display:flex;gap:22px;font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;color:#9aa4ac}
+  #v-auto .sw-navl a{text-decoration:none}
+  #v-auto .sw-hero{position:relative;overflow:hidden;border-top:1px solid #23282d;border-bottom:1px solid #23282d}
+  #v-auto .sw-hero img{width:100%;height:min(60vh,480px);object-fit:cover;opacity:.4}
+  #v-auto .sw-heroin{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;max-width:1120px;margin:0 auto;padding:0 34px}
+  #v-auto .sw-tag{font-size:.8rem;letter-spacing:.32em;text-transform:uppercase;color:#f5b301;margin-bottom:14px}
+  #v-auto .sw-hero h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(2.6rem,7vw,5.4rem);line-height:.98;text-transform:uppercase;letter-spacing:.01em;max-width:14ch}
+  #v-auto .sw-hero h1 em{font-style:normal;color:#f5b301}
+  #v-auto .sw-hero p{margin-top:16px;font-size:1.05rem;color:#c3cad0;max-width:44ch;font-weight:300}
+  #v-auto section{padding:64px 0}
+  #v-auto .sw-eyeb{font-size:.76rem;letter-spacing:.28em;text-transform:uppercase;color:#f5b301;margin-bottom:10px}
+  #v-auto .sw-h{font-family:'Oswald',sans-serif;font-weight:600;font-size:clamp(1.7rem,4vw,2.6rem);text-transform:uppercase;letter-spacing:.02em;margin-bottom:34px}
+  #v-auto .sw-ledger{border:1px solid #262c32;border-radius:6px;overflow:hidden}
+  #v-auto .sw-lrow{display:flex;align-items:center;gap:16px;padding:17px 20px;border-bottom:1px solid #1c2126;background:#161a1e}
+  #v-auto .sw-lrow:last-child{border-bottom:none}
+  #v-auto .sw-lrow .no{font-family:'JetBrains Mono',monospace;color:#586169;font-size:.82rem;width:34px}
+  #v-auto .sw-lrow .nm{font-weight:500;letter-spacing:.06em;text-transform:uppercase;font-size:1.02rem}
+  #v-auto .sw-lrow .ds{margin-left:auto;color:#9aa4ac;font-size:.86rem;font-weight:300;text-align:right;max-width:52%}
+  #v-auto .sw-lrow .pr{font-family:'JetBrains Mono',monospace;color:#f5b301;font-size:.92rem;white-space:nowrap}
+
+  /* quote wizard */
+  #v-auto .sw-quote{background:#0c0e10;border:1px solid #262c32;border-radius:10px;overflow:hidden;max-width:640px;margin:0 auto;box-shadow:0 30px 60px -30px #000}
+  #v-auto .sw-qhead{background:#161a1e;border-bottom:1px dashed #333b42;padding:16px 22px;display:flex;align-items:center;gap:12px}
+  #v-auto .sw-qhead .tk{font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#586169;letter-spacing:.1em}
+  #v-auto .sw-qhead .tt{font-family:'Oswald',sans-serif;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+  #v-auto .sw-prog{display:flex;gap:6px;margin-left:auto}
+  #v-auto .sw-prog i{width:22px;height:4px;border-radius:2px;background:#2b333a;display:block}
+  #v-auto .sw-prog i.on{background:#f5b301}
+  #v-auto .sw-qbody{padding:26px 24px 28px;min-height:250px}
+  #v-auto .sw-step{display:none;animation:swf .3s ease}
+  #v-auto .sw-step.on{display:block}
+  @keyframes swf{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  #v-auto .sw-q{font-family:'Oswald',sans-serif;font-weight:500;font-size:1.28rem;letter-spacing:.03em;margin-bottom:18px}
+  #v-auto .sw-opts{display:grid;gap:10px}
+  #v-auto .sw-opt{display:flex;align-items:center;gap:13px;border:1px solid #2b333a;border-radius:8px;padding:13px 15px;cursor:pointer;transition:.15s;background:#131619}
+  #v-auto .sw-opt:hover{border-color:#f5b301}
+  #v-auto .sw-opt.sel{border-color:#f5b301;background:rgba(245,179,1,.08)}
+  #v-auto .sw-opt .bx{width:20px;height:20px;border:2px solid #4a545c;border-radius:5px;flex:none;display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#0c0e10}
+  #v-auto .sw-opt.sel .bx{background:#f5b301;border-color:#f5b301}
+  #v-auto .sw-opt .ol{flex:1;font-weight:400}
+  #v-auto .sw-opt .op{font-family:'JetBrains Mono',monospace;color:#9aa4ac;font-size:.82rem}
+  #v-auto .sw-field{margin-bottom:14px}
+  #v-auto .sw-field label{display:block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#8b949c;margin-bottom:6px}
+  #v-auto .sw-field input{width:100%;background:#131619;border:1px solid #2b333a;border-radius:8px;padding:12px 14px;color:#e9edf0;font-family:'JetBrains Mono',monospace;font-size:.9rem}
+  #v-auto .sw-field input:focus{outline:none;border-color:#f5b301}
+  #v-auto .sw-est .er{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px dashed #262c32;font-size:.95rem}
+  #v-auto .sw-est .er .v{font-family:'JetBrains Mono',monospace;color:#e9edf0}
+  #v-auto .sw-est .tot{display:flex;justify-content:space-between;padding:15px 0 0;font-family:'Oswald',sans-serif;font-weight:600;font-size:1.4rem;letter-spacing:.04em}
+  #v-auto .sw-est .tot .v{color:#f5b301;font-family:'JetBrains Mono',monospace}
+  #v-auto .sw-note{font-size:.78rem;color:#8b949c;font-weight:300;margin-top:12px;line-height:1.6}
+  #v-auto .sw-conf{text-align:center;padding:14px 0}
+  #v-auto .sw-conf .ck{width:64px;height:64px;border-radius:50%;background:rgba(245,179,1,.12);border:2px solid #f5b301;color:#f5b301;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 18px}
+  #v-auto .sw-qfoot{display:flex;gap:12px;padding:18px 24px;border-top:1px solid #23282d;background:#101316}
+  #v-auto .sw-btn{font-family:'Oswald',sans-serif;font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size:.92rem;border:none;border-radius:8px;padding:13px 22px;cursor:pointer;transition:.15s}
+  #v-auto .sw-btn.pri{background:#f5b301;color:#1a1206;flex:1}
+  #v-auto .sw-btn.pri:hover{background:#ffc21f}
+  #v-auto .sw-btn.gho{background:transparent;color:#9aa4ac;border:1px solid #2b333a}
+  #v-auto .sw-btn.gho:hover{color:#fff}
+  #v-auto .sw-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#23282d;border:1px solid #23282d;border-radius:8px;overflow:hidden}
+  #v-auto .sw-cell{background:#161a1e;padding:26px 22px;text-align:center}
+  #v-auto .sw-cell .big{font-family:'Oswald',sans-serif;font-weight:700;font-size:2.4rem;color:#f5b301}
+  #v-auto .sw-cell .lb{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:#9aa4ac;margin-top:4px}
+  #v-auto .sw-quotebox{border-left:3px solid #f5b301;padding:6px 0 6px 24px;max-width:640px}
+  #v-auto .sw-quotebox p{font-size:1.3rem;font-weight:300;line-height:1.5;color:#e9edf0}
+  #v-auto .sw-quotebox .by{margin-top:12px;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:#f5b301}
+  #v-auto .sw-foot{background:#0c0e10;border-top:1px solid #23282d;padding:30px 22px;text-align:center;font-family:'Inter',sans-serif;font-size:.76rem;color:#6b747c;line-height:1.7}
+  @media(max-width:640px){#v-auto .sw-grid3{grid-template-columns:1fr}#v-auto .sw-navl{display:none}}
+
+  /* ================================================================
+     REBUILD 3 — GORDONS NURSERIES (#v-garden) — botanical almanac
+     ================================================================ */
+  #v-garden{background:#f3f0e4;color:#243026;font-family:'EB Garamond',serif}
+  #v-garden .gd-wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  #v-garden .gd-top{display:flex;align-items:center;gap:18px;max-width:1080px;margin:0 auto;padding:22px 24px}
+  #v-garden .gd-logo{font-family:'Fraunces',serif;font-weight:600;font-size:1.35rem;letter-spacing:.01em;color:#2f4a34}
+  #v-garden .gd-logo .lf{color:#6b8f3d}
+  #v-garden .gd-topl{margin-left:auto;display:flex;gap:24px;font-size:1rem;color:#4a5a4c}
+  #v-garden .gd-topl a{text-decoration:none}
+  #v-garden .gd-hero{position:relative;overflow:hidden}
+  #v-garden .gd-hero img{width:100%;height:min(66vh,520px);object-fit:cover}
+  #v-garden .gd-hs{position:absolute;inset:0;background:linear-gradient(90deg,rgba(24,38,27,.72),rgba(24,38,27,.15))}
+  #v-garden .gd-heroin{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;max-width:1080px;margin:0 auto;padding:0 40px;color:#f3f0e4}
+  #v-garden .gd-badge{align-self:flex-start;border:1px solid rgba(243,240,228,.5);border-radius:999px;padding:6px 16px;font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:20px}
+  #v-garden .gd-hero h1{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(2.5rem,6.5vw,4.6rem);line-height:1.02;max-width:15ch}
+  #v-garden .gd-hero p{font-size:1.2rem;margin-top:16px;max-width:40ch;color:#e4e6d6}
+  #v-garden section{padding:66px 0}
+  #v-garden .gd-eyeb{font-family:'Jost',sans-serif;font-size:.76rem;letter-spacing:.24em;text-transform:uppercase;color:#6b8f3d;margin-bottom:10px;text-align:center}
+  #v-garden .gd-h{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.9rem,4.5vw,2.9rem);text-align:center;margin-bottom:8px;color:#2f4a34}
+  #v-garden .gd-lead{text-align:center;max-width:60ch;margin:0 auto 42px;font-size:1.16rem;color:#455148;line-height:1.6}
+  #v-garden .gd-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:16px}
+  #v-garden .gd-packet{background:#fbf9f0;border:1px solid #d9d3bf;border-radius:4px;padding:20px 18px;position:relative;box-shadow:0 2px 0 #d9d3bf}
+  #v-garden .gd-packet .bot{font-family:'Jost',sans-serif;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#9a8f6f}
+  #v-garden .gd-packet h4{font-family:'Fraunces',serif;font-weight:600;font-size:1.5rem;color:#2f4a34;margin:4px 0 8px}
+  #v-garden .gd-packet p{font-size:1rem;color:#5a6459;line-height:1.45;min-height:66px}
+  #v-garden .gd-stock{display:inline-flex;align-items:center;gap:7px;margin-top:12px;font-family:'Jost',sans-serif;font-size:.78rem;letter-spacing:.04em}
+  #v-garden .gd-stock .d{width:8px;height:8px;border-radius:50%}
+  #v-garden .gd-stock.in .d{background:#5a9e2f;box-shadow:0 0 7px rgba(90,158,47,.6)}
+  #v-garden .gd-stock.in{color:#4a7a26}
+  #v-garden .gd-stock.low .d{background:#d99a2b}
+  #v-garden .gd-stock.low{color:#a9741a}
+  #v-garden .gd-split{display:grid;grid-template-columns:1.05fr .95fr;gap:46px;align-items:center}
+  #v-garden .gd-split img{width:100%;border-radius:8px;box-shadow:0 20px 40px -24px rgba(36,48,38,.6)}
+  #v-garden .gd-split h3{font-family:'Fraunces',serif;font-weight:600;font-size:2rem;color:#2f4a34;margin-bottom:16px}
+  #v-garden .gd-split p{font-size:1.14rem;line-height:1.66;color:#455148;margin-bottom:14px}
+  #v-garden .gd-band{background:#2f4a34;color:#eef0e2;text-align:center;padding:64px 24px}
+  #v-garden .gd-band h3{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:14px}
+  #v-garden .gd-band p{font-size:1.14rem;color:#c9d3bd;max-width:52ch;margin:0 auto 26px}
+  #v-garden .gd-cta{display:inline-block;background:#a7c957;color:#1e2c1f;font-family:'Jost',sans-serif;font-weight:600;letter-spacing:.06em;padding:14px 32px;border-radius:999px;text-decoration:none}
+  #v-garden .gd-quote{font-style:italic;font-size:1.5rem;line-height:1.5;text-align:center;max-width:60ch;margin:0 auto;color:#2f4a34}
+  #v-garden .gd-qby{font-family:'Jost',sans-serif;font-style:normal;font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;color:#6b8f3d;margin-top:16px;text-align:center}
+  #v-garden .gd-foot{background:#1e2c1f;color:#a9b6a0;text-align:center;padding:30px 24px;font-family:'Jost',sans-serif;font-size:.78rem;line-height:1.7}
+  @media(max-width:760px){#v-garden .gd-split{grid-template-columns:1fr;gap:26px}#v-garden .gd-topl{display:none}}
+
+  /* ================================================================
+     REBUILD 4 — STITCHES ALTERATIONS (#v-atelier) — fashion atelier
+     ================================================================ */
+  #v-atelier{background:#eae5dd;color:#2c2825;font-family:'Jost',sans-serif;font-weight:300}
+  #v-atelier .at-side{position:fixed;top:52px;bottom:0;left:0;width:64px;background:#2c2825;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:22px 0;z-index:50}
+  #v-atelier .at-side .vt{writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Cormorant Garamond',serif;font-size:1.15rem;letter-spacing:.32em;text-transform:uppercase;color:#eae5dd}
+  #v-atelier .at-side .no{font-family:'Cormorant Garamond',serif;color:#b79a6f;font-size:1.1rem}
+  #v-atelier .at-main{margin-left:64px}
+  #v-atelier .at-wrap{max-width:960px;margin:0 auto;padding:0 34px}
+  #v-atelier .at-hero{position:relative;overflow:hidden}
+  #v-atelier .at-hero img{width:100%;height:min(72vh,560px);object-fit:cover}
+  #v-atelier .at-hs{position:absolute;inset:0;background:linear-gradient(180deg,rgba(44,40,37,.12),rgba(44,40,37,.55))}
+  #v-atelier .at-heroin{position:absolute;left:0;right:0;bottom:0;padding:48px 34px;max-width:960px;margin:0 auto;color:#f4efe7}
+  #v-atelier .at-kick{font-size:.76rem;letter-spacing:.34em;text-transform:uppercase;color:#e6cfa6;margin-bottom:14px}
+  #v-atelier .at-name{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(2.8rem,8vw,5.4rem);line-height:.96}
+  #v-atelier .at-name em{font-style:italic;color:#e6cfa6}
+  #v-atelier .at-tag{font-size:1.05rem;letter-spacing:.02em;margin-top:12px;max-width:42ch}
+  #v-atelier section{padding:66px 0}
+  #v-atelier .at-eyeb{font-size:.74rem;letter-spacing:.28em;text-transform:uppercase;color:#9a7b4a;margin-bottom:12px}
+  #v-atelier .at-h{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(2rem,5vw,3.1rem);line-height:1.05;margin-bottom:26px}
+  #v-atelier .at-h em{font-style:italic}
+  #v-atelier .at-intro{font-size:1.22rem;line-height:1.7;max-width:60ch;color:#463f39;font-weight:300}
+  #v-atelier .at-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin-top:14px}
+  #v-atelier .at-fstep{border-top:1px solid #b6ada0;padding-top:16px}
+  #v-atelier .at-fstep .n{font-family:'Cormorant Garamond',serif;font-size:2.4rem;color:#b79a6f;line-height:1}
+  #v-atelier .at-fstep h5{font-size:.92rem;letter-spacing:.1em;text-transform:uppercase;font-weight:500;margin:10px 0 6px}
+  #v-atelier .at-fstep p{font-size:.98rem;color:#5e564e;line-height:1.5}
+  #v-atelier .at-price{background:#2c2825;color:#eae5dd;padding:64px 0}
+  #v-atelier .at-plist{max-width:640px;margin:0 auto}
+  #v-atelier .at-prow{display:flex;align-items:baseline;gap:14px;padding:15px 0;border-bottom:1px solid #47413b}
+  #v-atelier .at-prow .nm{font-family:'Cormorant Garamond',serif;font-size:1.4rem}
+  #v-atelier .at-prow .nm small{display:block;font-family:'Jost',sans-serif;font-size:.8rem;color:#a99f92;margin-top:2px;font-weight:300}
+  #v-atelier .at-prow .dots{flex:1;border-bottom:1px dotted #6a6259;transform:translateY(-5px)}
+  #v-atelier .at-prow .pr{font-family:'Cormorant Garamond',serif;font-size:1.4rem;color:#e6cfa6}
+  #v-atelier .at-band{text-align:center;padding:74px 34px}
+  #v-atelier .at-band .at-quote{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(1.6rem,3.6vw,2.3rem);line-height:1.4;max-width:24ch;margin:0 auto;color:#2c2825}
+  #v-atelier .at-qby{font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:#9a7b4a;margin-top:20px}
+  #v-atelier .at-cta{display:inline-block;margin-top:30px;border:1px solid #2c2825;color:#2c2825;padding:14px 34px;font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;border-radius:2px;transition:.2s}
+  #v-atelier .at-cta:hover{background:#2c2825;color:#eae5dd}
+  #v-atelier .at-foot{background:#1f1c1a;color:#8f877e;text-align:center;padding:30px 34px;font-size:.76rem;line-height:1.7}
+  @media(max-width:760px){#v-atelier .at-flow{grid-template-columns:1fr 1fr;gap:18px}#v-atelier .at-side{width:44px}#v-atelier .at-main{margin-left:44px}}
+
+  /* ================================================================
+     REBUILD 5 — FUR-B-LUSCIOUS (#v-pet) — rounded playful pet brand
+     ================================================================ */
+  #v-pet{background:#fef7ef;color:#33414a;font-family:'Fredoka',sans-serif;font-weight:400}
+  #v-pet .pw-wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  #v-pet .pw-nav{display:flex;align-items:center;gap:16px;max-width:1080px;margin:0 auto;padding:20px 24px}
+  #v-pet .pw-logo{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.35rem;color:#f2856d}
+  #v-pet .pw-logo span{color:#2bb3ad}
+  #v-pet .pw-navl{margin-left:auto;display:flex;gap:22px;font-size:.92rem;font-weight:500;color:#5a6a72}
+  #v-pet .pw-navl a{text-decoration:none}
+  #v-pet .pw-book{background:#2bb3ad;color:#fff;padding:9px 20px;border-radius:999px;font-weight:600;text-decoration:none}
+  #v-pet .pw-hero{display:grid;grid-template-columns:1.05fr .95fr;gap:30px;align-items:center;padding:40px 0 20px}
+  #v-pet .pw-hx .tag{display:inline-block;background:#ffe0b8;color:#b5651d;font-weight:600;font-size:.82rem;padding:7px 16px;border-radius:999px;margin-bottom:20px}
+  #v-pet .pw-hx h1{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(2.4rem,6vw,4.2rem);line-height:1.02;color:#33414a}
+  #v-pet .pw-hx h1 span{color:#f2856d}
+  #v-pet .pw-hx p{font-size:1.14rem;line-height:1.6;color:#5a6a72;margin:18px 0 26px;max-width:44ch}
+  #v-pet .pw-hbtns{display:flex;gap:14px;flex-wrap:wrap}
+  #v-pet .pw-hbtns a{font-weight:600;padding:14px 26px;border-radius:999px;text-decoration:none;cursor:pointer}
+  #v-pet .pw-hbtns .p{background:#f2856d;color:#fff}
+  #v-pet .pw-hbtns .s{background:#fff;color:#33414a;border:2px solid #e6ded3}
+  #v-pet .pw-himg{position:relative}
+  #v-pet .pw-himg img{width:100%;border-radius:28px;box-shadow:0 26px 50px -24px rgba(242,133,109,.5)}
+  #v-pet .pw-himg .blob{position:absolute;inset:-18px;background:#ffe0b8;border-radius:44% 56% 60% 40%/50% 44% 56% 50%;z-index:-1}
+  #v-pet section{padding:56px 0}
+  #v-pet .pw-eyeb{text-align:center;font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:.8rem;color:#2bb3ad;margin-bottom:8px}
+  #v-pet .pw-h{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(1.8rem,4.5vw,2.7rem);text-align:center;margin-bottom:36px;color:#33414a}
+  #v-pet .pw-svc{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+  #v-pet .pw-scard{background:#fff;border-radius:22px;padding:26px 22px;text-align:center;box-shadow:0 10px 30px -20px rgba(51,65,74,.4)}
+  #v-pet .pw-scard .ic{font-size:2.3rem;margin-bottom:12px}
+  #v-pet .pw-scard h4{font-family:'Fredoka',sans-serif;font-weight:600;font-size:1.2rem;margin-bottom:8px}
+  #v-pet .pw-scard p{font-size:.96rem;color:#6a7880;line-height:1.5;margin-bottom:12px}
+  #v-pet .pw-scard .pr{font-weight:600;color:#2bb3ad}
+  #v-pet .pw-booksec{background:#2bb3ad;border-radius:30px;padding:46px;display:grid;grid-template-columns:1fr 320px;gap:40px;align-items:center;color:#fff}
+  #v-pet .pw-booksec h3{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(1.7rem,3.6vw,2.5rem);margin-bottom:14px}
+  #v-pet .pw-booksec p{font-size:1.08rem;color:#d5f4f2;line-height:1.6;margin-bottom:12px}
+  #v-pet .pw-steps{list-style:none;margin-top:16px;display:grid;gap:10px}
+  #v-pet .pw-steps li{display:flex;align-items:center;gap:12px;font-weight:500}
+  #v-pet .pw-steps .n{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
+  /* phone mockup */
+  #v-pet .pw-phone{background:#1c2b32;border-radius:34px;padding:12px;box-shadow:0 26px 50px -20px rgba(0,0,0,.5);justify-self:center;width:280px}
+  #v-pet .pw-screen{background:#fef7ef;border-radius:24px;overflow:hidden}
+  #v-pet .pw-pbar{background:#f2856d;color:#fff;padding:16px;font-weight:600;text-align:center}
+  #v-pet .pw-pbody{padding:16px}
+  #v-pet .pw-pbody .lab{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#98a6ad;margin:10px 0 6px}
+  #v-pet .pw-chip{display:inline-block;background:#fff;border:1px solid #ece3d7;border-radius:999px;padding:7px 13px;font-size:.82rem;margin:0 5px 6px 0;color:#4a5a62}
+  #v-pet .pw-chip.on{background:#2bb3ad;color:#fff;border-color:#2bb3ad}
+  #v-pet .pw-slot{display:flex;justify-content:space-between;background:#fff;border:1px solid #ece3d7;border-radius:12px;padding:11px 14px;font-size:.88rem;margin-bottom:8px;color:#33414a}
+  #v-pet .pw-slot.on{background:#eafaf9;border-color:#2bb3ad;color:#178f89;font-weight:600}
+  #v-pet .pw-pbtn{background:#f2856d;color:#fff;text-align:center;border-radius:12px;padding:12px;font-weight:600;margin-top:6px}
+  #v-pet .pw-quote{background:#fff;border-radius:24px;padding:40px;text-align:center;max-width:760px;margin:0 auto;box-shadow:0 12px 34px -22px rgba(51,65,74,.4)}
+  #v-pet .pw-quote p{font-size:1.3rem;line-height:1.55;color:#3a4952}
+  #v-pet .pw-quote .st{color:#ffb43d;font-size:1.3rem;margin-bottom:12px}
+  #v-pet .pw-quote .by{font-weight:600;color:#2bb3ad;margin-top:14px}
+  #v-pet .pw-foot{background:#28353c;color:#93a2aa;text-align:center;padding:32px 24px;font-size:.78rem;line-height:1.7}
+  @media(max-width:800px){#v-pet .pw-hero{grid-template-columns:1fr}#v-pet .pw-booksec{grid-template-columns:1fr;padding:32px}#v-pet .pw-phone{width:260px}#v-pet .pw-navl{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ==================== OPERATOR DASHBOARD ==================== -->
+<main id="board">
+  <div class="op-top">
+    <div class="op-logo">WESTSIDE <b>/</b> web studio</div>
+    <div class="op-topmeta">PROSPECT BOARD · WEST AUCKLAND · JUL 2026</div>
+  </div>
+
+  <div class="op-hero">
+    <div class="op-eyebrow">The local web gap report</div>
+    <h1>Beloved businesses.<br><em>Forgettable websites.</em></h1>
+    <p>Five independent West Auckland businesses their customers already rave about on Google — but with no website at all, or one stuck a decade in the past. Tap any card to see the site we'd build them.</p>
+  </div>
+
+  <div class="op-strip">
+    <div class="op-stat"><div class="n">5</div><div class="l">Prospects</div></div>
+    <div class="op-stat"><div class="n">★ 4.88 <span class="u">avg</span></div><div class="l">Google rating</div></div>
+    <div class="op-stat"><div class="n">656</div><div class="l">Reviews between them</div></div>
+    <div class="op-stat"><div class="n">3 <span class="u">of 5</span></div><div class="l">Have no website at all</div></div>
+  </div>
+
+  <div class="op-legend">
+    <span><i class="dotg"></i> Great Google reviews (≥4.2★)</span>
+    <span><i class="dotr"></i> No website</span>
+    <span><i class="dota"></i> Outdated website</span>
+  </div>
+
+  <div class="op-grid">
+
+    <!-- Burnt Butter Diner -->
+    <article class="op-card">
+      <div class="op-shot">
+        <div class="op-chrome"><span class="cd"><i></i><i></i><i></i></span><span class="addr">no website found</span></div>
+        <span class="op-wbadge no">No website</span>
+        <div class="op-none"><div class="g">🌐</div><div class="t">No website</div></div>
+      </div>
+      <div class="op-b">
+        <div class="op-name">Burnt Butter Diner</div>
+        <div class="op-cat">Diner &amp; café · Avondale</div>
+        <div class="op-rev"><div class="op-revnum">★ 4.8</div><div class="op-revtxt"><div class="lab">Great reviews</div><div class="cnt">370 Google reviews</div></div></div>
+        <button class="op-btn" onclick="openView('v-diner')">See new website →</button>
+      </div>
+    </article>
+
+    <!-- Swanson Worx -->
+    <article class="op-card">
+      <div class="op-shot">
+        <div class="op-chrome"><span class="cd"><i></i><i></i><i></i></span><span class="addr">no website found</span></div>
+        <span class="op-wbadge no">No website</span>
+        <div class="op-none"><div class="g">🌐</div><div class="t">No website</div></div>
+      </div>
+      <div class="op-b">
+        <div class="op-name">Swanson Worx</div>
+        <div class="op-cat">Auto repair &amp; tyres · Swanson</div>
+        <div class="op-rev"><div class="op-revnum">★ 4.9</div><div class="op-revtxt"><div class="lab">Great reviews</div><div class="cnt">109 Google reviews</div></div></div>
+        <button class="op-btn" onclick="openView('v-auto')">See new website →</button>
+      </div>
+    </article>
+
+    <!-- Gordons Nurseries -->
+    <article class="op-card">
+      <div class="op-shot">
+        <div class="op-chrome"><span class="cd"><i></i><i></i><i></i></span><span class="addr">gordonsnurseries.co.nz</span></div>
+        <span class="op-wbadge old">Outdated website</span>
+        <div class="op-shotimg" style="background-image:url('https://pub.hyperagent.com/api/published/pbf01KX13QZQ2_SR0TPCXKQTJZ9ZDH/gordonsnurseries-co-nz.png')"></div>
+      </div>
+      <div class="op-b">
+        <div class="op-name">Gordons Nurseries</div>
+        <div class="op-cat">Native plant nursery · Oratia</div>
+        <div class="op-rev"><div class="op-revnum">★ 4.8</div><div class="op-revtxt"><div class="lab">Great reviews</div><div class="cnt">32 Google reviews</div></div></div>
+        <button class="op-btn" onclick="openView('v-garden')">See new website →</button>
+      </div>
+    </article>
+
+    <!-- Stitches Alterations -->
+    <article class="op-card">
+      <div class="op-shot">
+        <div class="op-chrome"><span class="cd"><i></i><i></i><i></i></span><span class="addr">no website found</span></div>
+        <span class="op-wbadge no">No website</span>
+        <div class="op-none"><div class="g">🌐</div><div class="t">No website</div></div>
+      </div>
+      <div class="op-b">
+        <div class="op-name">Stitches Alterations</div>
+        <div class="op-cat">Tailor &amp; alterations · Te Atatū</div>
+        <div class="op-rev"><div class="op-revnum">★ 4.9</div><div class="op-revtxt"><div class="lab">Great reviews</div><div class="cnt">46 Google reviews</div></div></div>
+        <button class="op-btn" onclick="openView('v-atelier')">See new website →</button>
+      </div>
+    </article>
+
+    <!-- Fur-B-Luscious -->
+    <article class="op-card">
+      <div class="op-shot">
+        <div class="op-chrome"><span class="cd"><i></i><i></i><i></i></span><span class="addr">fur-b-luscious.co.nz</span></div>
+        <span class="op-wbadge old">Outdated website</span>
+        <div class="op-shotimg" style="background-image:url('https://pub.hyperagent.com/api/published/pbf01KX13QZZP_YN41BJDPTR4XQY2R/fur-b-luscious-co-nz.png')"></div>
+      </div>
+      <div class="op-b">
+        <div class="op-name">Fur-B-Luscious Dog Salon</div>
+        <div class="op-cat">Dog grooming · Avondale</div>
+        <div class="op-rev"><div class="op-revnum">★ 5.0</div><div class="op-revtxt"><div class="lab">Great reviews</div><div class="cnt">99 Google reviews</div></div></div>
+        <button class="op-btn" onclick="openView('v-pet')">See new website →</button>
+      </div>
+    </article>
+
+  </div>
+
+  <p class="op-foot">
+    <b>How to read this board.</b> Every business here is real and rated ≥4.2★ on Google. The preview tile shows their <b>actual current website</b> (or a "No website" tile where none exists) — the polish lives behind the button.<br>
+    Concept sites are <b>independent mockups</b>, not affiliated with or endorsed by these businesses. Ratings, review counts and current-site screenshots reflect public Google &amp; web data at time of research (July 2026).
+  </p>
+</main>
+
+<!-- ==================== BACK BAR ==================== -->
+<div class="backbar" id="backbar">
+  <button onclick="closeView()">← Back to board</button>
+  <span class="bt" id="backTitle"></span>
+  <a class="bv" id="backVisit" target="_blank" rel="noopener noreferrer">Compare: current site ↗</a>
+</div>
+
+<!-- ==================== REBUILD VIEWS ==================== -->
+<div id="views">
+
+  <!-- ============ 1 · BURNT BUTTER DINER ============ -->
+  <section class="view" id="v-diner" data-name="Burnt Butter Diner">
+    <div class="dn-hero">
+      <img src="https://pub.hyperagent.com/api/published/pbf01KX13VRVJ_Y7J4T7049S33QGN2/7c562608-28b0-4e7c-9b3d-31903ef6441c.png" alt="Burnt Butter Diner interior">
+      <div class="dn-scrim"></div>
+      <div class="dn-stamp"><b>OPEN</b><span>TUE–SAT · 7–2</span></div>
+      <div class="dn-heroin">
+        <div class="dn-kicker">AVONDALE · EST. 2022</div>
+        <div class="dn-name">Burnt Butter</div>
+        <div class="dn-sub">Filter coffee · proper breakfast · good baking</div>
+      </div>
+    </div>
+    <div class="dn-bar">NO ESPRESSO MACHINE — JUST <b>BOTTOMLESS FILTER COFFEE</b> &amp; A CABINET WORTH THE TRIP</div>
+
+    <div class="dn-wrap">
+      <section>
+        <div class="dn-h">The Menu</div>
+        <div class="dn-rule"></div>
+        <div class="dn-menu">
+          <div class="dn-mcat">Breakfast</div>
+          <div class="dn-item"><span class="nm">Smoked kahawai crumpets<small>house crumpets, poached eggs, herb butter</small></span><span class="dots"></span><span class="pr">19</span></div>
+          <div class="dn-item"><span class="nm">Corn bread &amp; chorizo<small>fried egg, tomato jam, coriander</small></span><span class="dots"></span><span class="pr">21</span></div>
+          <div class="dn-item"><span class="nm">The bacon butty<small>streaky bacon, brown sauce, toasted milk bun</small></span><span class="dots"></span><span class="pr">14</span></div>
+          <div class="dn-item"><span class="nm">Bircher bowl<small>stewed tamarillo, toasted seeds, yoghurt</small></span><span class="dots"></span><span class="pr">15</span></div>
+          <div class="dn-mcat">From the cabinet</div>
+          <div class="dn-item"><span class="nm">Brown-butter cookie</span><span class="dots"></span><span class="pr">5</span></div>
+          <div class="dn-item"><span class="nm">Claudia's cake of the day<small>ask the cabinet — it changes daily</small></span><span class="dots"></span><span class="pr">9</span></div>
+          <div class="dn-mcat">Coffee &amp; such</div>
+          <div class="dn-item"><span class="nm">Bottomless filter coffee</span><span class="dots"></span><span class="pr">6</span></div>
+          <div class="dn-item"><span class="nm">Pot of tea / hot choc</span><span class="dots"></span><span class="pr">5</span></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="dn-split">
+      <img src="https://pub.hyperagent.com/api/published/pbf01KX13VSCS_MCAD58JTQWG3HCM2/ee23bc6d-3f15-4450-aa4e-8e687110d330.png" alt="Signature plate">
+      <div class="dn-splitx">
+        <div class="dn-quote">"A genuinely special little neighbourhood diner — the baking alone is worth the drive to Avondale."</div>
+        <div class="dn-qby">— the kind of thing 370 Google reviewers keep saying</div>
+      </div>
+    </div>
+
+    <div class="dn-cta">
+      <h3>Order ahead. Skip the wait.</h3>
+      <p style="font-family:'Special Elite',serif;max-width:44ch;margin:0 auto;color:#e9cfa6">The gap we'd close: right now there's nowhere online to see the menu or grab a table. Here's the fix.</p>
+      <div class="dn-order">
+        <a class="p">Order pickup →</a>
+        <a class="s">Book a table</a>
+      </div>
+    </div>
+
+    <div class="dn-foot">
+      Independent redesign concept — not affiliated with or endorsed by Burnt Butter Diner.<br>
+      Real business · 4.8★ from 370 Google reviews · currently Instagram-only (@burntbutter_nz). Menu shown is an illustrative sample for the concept.
+    </div>
+  </section>
+
+  <!-- ============ 2 · SWANSON WORX ============ -->
+  <section class="view" id="v-auto" data-name="Swanson Worx">
+    <div class="sw-hz"></div>
+    <nav class="sw-nav">
+      <div class="sw-brand">SWANSON <b>WORX</b></div>
+      <div class="sw-navl"><a>Servicing</a><a>WOF</a><a>Tyres</a><a>Book</a></div>
+    </nav>
+    <div class="sw-hero">
+      <img src="https://pub.hyperagent.com/api/published/pbf01KX13VSZ5_6DMM4H41PM4JTAMV/e5dd21ec-1b90-4ea2-a9d6-c0c67abf9e5b.png" alt="Swanson Worx workshop">
+      <div class="sw-heroin">
+        <div class="sw-tag">Family-run in Swanson since 2015</div>
+        <h1>Honest mechanics.<br><em>No surprises.</em></h1>
+        <p>Servicing, WOFs, brakes, suspension and tyres — explained in plain English, priced up front, done in a day.</p>
+      </div>
+    </div>
+
+    <div class="sw-wrap">
+      <section>
+        <div class="sw-eyeb">Get a price in 30 seconds</div>
+        <div class="sw-h">Instant quote &amp; booking</div>
+        <div class="sw-quote">
+          <div class="sw-qhead">
+            <span class="tt">Work Order</span>
+            <span class="tk">#WX-2026-0417</span>
+            <span class="sw-prog"><i class="on" data-p="0"></i><i data-p="1"></i><i data-p="2"></i><i data-p="3"></i><i data-p="4"></i></span>
+          </div>
+          <div class="sw-qbody">
+            <!-- step 0 -->
+            <div class="sw-step on" data-step="0">
+              <div class="sw-q">What does it need?</div>
+              <div class="sw-opts" id="swServices">
+                <div class="sw-opt sel" data-price="65"><span class="bx">✓</span><span class="ol">WOF inspection</span><span class="op">$65</span></div>
+                <div class="sw-opt sel" data-price="185"><span class="bx">✓</span><span class="ol">Full service (oil, filter, 30-pt check)</span><span class="op">$185</span></div>
+                <div class="sw-opt" data-price="0"><span class="bx"></span><span class="ol">Brake inspection</span><span class="op">free</span></div>
+                <div class="sw-opt" data-price="120"><span class="bx"></span><span class="ol">Wheel alignment</span><span class="op">$120</span></div>
+                <div class="sw-opt" data-price="0"><span class="bx"></span><span class="ol">Something's not right — diagnose it</span><span class="op">from $95</span></div>
+              </div>
+            </div>
+            <!-- step 1 -->
+            <div class="sw-step" data-step="1">
+              <div class="sw-q">Your vehicle</div>
+              <div class="sw-field"><label>Make &amp; model</label><input id="swVeh" value="2016 Toyota Aqua" ></div>
+              <div class="sw-field"><label>Rego</label><input id="swReg" value="KWX419" ></div>
+              <div class="sw-note">Demo details are pre-filled so you can see the whole flow.</div>
+            </div>
+            <!-- step 2 -->
+            <div class="sw-step" data-step="2">
+              <div class="sw-q">When suits?</div>
+              <div class="sw-opts">
+                <div class="sw-opt" data-day onclick="swDay(this)"><span class="bx"></span><span class="ol">Thu 10 Jul · morning drop-off</span><span class="op">2 slots</span></div>
+                <div class="sw-opt sel" data-day onclick="swDay(this)"><span class="bx">✓</span><span class="ol">Fri 11 Jul · morning drop-off</span><span class="op">3 slots</span></div>
+                <div class="sw-opt" data-day onclick="swDay(this)"><span class="bx"></span><span class="ol">Sat 12 Jul · early only</span><span class="op">1 slot</span></div>
+              </div>
+            </div>
+            <!-- step 3 -->
+            <div class="sw-step" data-step="3">
+              <div class="sw-q">Your estimate</div>
+              <div class="sw-est" id="swEst"></div>
+              <div class="sw-note">Fixed-price estimate — we call before doing anything beyond it. Prices incl. GST.</div>
+            </div>
+            <!-- step 4 -->
+            <div class="sw-step" data-step="4">
+              <div class="sw-conf">
+                <div class="ck">✓</div>
+                <div class="sw-q" style="margin-bottom:8px">You're booked in.</div>
+                <p style="font-weight:300;color:#c3cad0;max-width:38ch;margin:0 auto 6px">2016 Toyota Aqua · Fri 11 Jul · <span id="swConfTot">$250</span> estimate. Confirmation texted to you.</p>
+                <p class="sw-note" style="max-width:40ch;margin:14px auto 0">That whole quote + booking just happened <b style="color:#f5b301;font-weight:600">with zero staff involvement</b> — while the team stayed under the bonnet.</p>
+              </div>
+            </div>
+          </div>
+          <div class="sw-qfoot">
+            <button class="sw-btn gho" id="swBack" onclick="swPrev()" style="display:none">Back</button>
+            <button class="sw-btn pri" id="swNext" onclick="swNext()">See my price →</button>
+          </div>
+        </div>
+      </section>
+
+      <section style="padding-top:12px">
+        <div class="sw-eyeb">What we do</div>
+        <div class="sw-h">Every job, plainly priced</div>
+        <div class="sw-ledger">
+          <div class="sw-lrow"><span class="no">01</span><span class="nm">WOF Inspection</span><span class="ds">While-you-wait, honest re-check policy</span><span class="pr">$65</span></div>
+          <div class="sw-lrow"><span class="no">02</span><span class="nm">Full Service</span><span class="ds">Oil, filter &amp; 30-point safety check</span><span class="pr">$185</span></div>
+          <div class="sw-lrow"><span class="no">03</span><span class="nm">Brakes &amp; Suspension</span><span class="ds">Inspection free, quoted before any work</span><span class="pr">from $140</span></div>
+          <div class="sw-lrow"><span class="no">04</span><span class="nm">Tyres &amp; Wheel Alignment</span><span class="ds">Fitting + balancing, Dynamic Wheel Co. dealer</span><span class="pr">from $120</span></div>
+          <div class="sw-lrow"><span class="no">05</span><span class="nm">Diagnostics</span><span class="ds">Warning light? We'll find the real cause</span><span class="pr">from $95</span></div>
+        </div>
+      </section>
+
+      <section style="padding-top:12px">
+        <div class="sw-grid3">
+          <div class="sw-cell"><div class="big">4.9★</div><div class="lb">109 Google reviews</div></div>
+          <div class="sw-cell"><div class="big">10 yrs</div><div class="lb">Serving Swanson</div></div>
+          <div class="sw-cell"><div class="big">1 day</div><div class="lb">Most jobs turned around</div></div>
+        </div>
+      </section>
+
+      <section style="padding-top:12px;padding-bottom:74px">
+        <div class="sw-quotebox">
+          <p>"They're honest, they don't overcharge and clearly explain things to me. My trusted mechanic for the last 7 years."</p>
+          <div class="by">— verbatim Google reviews</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="sw-foot">
+      Independent redesign concept — not affiliated with or endorsed by Swanson Worx.<br>
+      Real business · 4.9★ from 109 Google reviews · currently no website (active on Facebook). Prices &amp; quote flow are an illustrative demo.
+    </div>
+  </section>
+
+  <!-- ============ 3 · GORDONS NURSERIES ============ -->
+  <section class="view" id="v-garden" data-name="Gordons Nurseries" data-visit="http://www.gordonsnurseries.co.nz/">
+    <nav class="gd-top">
+      <div class="gd-logo">Gordons <span class="lf">Native</span> Nurseries</div>
+      <div class="gd-topl"><a>Stock list</a><a>Plant care</a><a>Landscaping</a><a>Find us</a></div>
+    </nav>
+    <div class="gd-hero">
+      <img src="https://pub.hyperagent.com/api/published/pbf01KX13VTKJ_35QD9ZJ6J6MYB62Y/b6853bbd-4f4c-4286-b546-28f60c7e88ee.png" alt="Gordons native plant nursery">
+      <div class="gd-hs"></div>
+      <div class="gd-heroin">
+        <div class="gd-badge">Oratia · Waitākere foothills · since 2006</div>
+        <h1>Eco-sourced natives, grown for Aotearoa gardens</h1>
+        <p>Ferns, flax, rātā and kōwhai — quality plants at honest prices, from people who know them by name.</p>
+      </div>
+    </div>
+
+    <div class="gd-wrap">
+      <section>
+        <div class="gd-eyeb">In the nursery this week</div>
+        <div class="gd-h">Live availability board</div>
+        <div class="gd-lead">The gap we'd close: today the stock list is a bare text page. Here it's a living almanac — customers see what's ready before they drive up Scenic Drive.</div>
+        <div class="gd-board">
+          <div class="gd-packet"><div class="bot">Ferns · shade</div><h4>Ponga &amp; Silver Fern</h4><p>Iconic tree ferns for a cool, sheltered corner.</p><div class="gd-stock in"><span class="d"></span>In stock now</div></div>
+          <div class="gd-packet"><div class="bot">Grasses · coastal</div><h4>Harakeke Flax</h4><p>Hardy, bird-friendly, brilliant for banks &amp; borders.</p><div class="gd-stock in"><span class="d"></span>In stock now</div></div>
+          <div class="gd-packet"><div class="bot">Trees · flowering</div><h4>Kōwhai</h4><p>Spring gold that tūī can't resist. Grows fast.</p><div class="gd-stock low"><span class="d"></span>Low — 8 left</div></div>
+          <div class="gd-packet"><div class="bot">Trees · specimen</div><h4>Northern Rātā</h4><p>Slow, majestic, a legacy tree for the grandkids.</p><div class="gd-stock in"><span class="d"></span>In stock now</div></div>
+          <div class="gd-packet"><div class="bot">Climbers · native</div><h4>Clematis paniculata</h4><p>Sheets of white star flowers over a fence in spring.</p><div class="gd-stock low"><span class="d"></span>Low — ask us</div></div>
+          <div class="gd-packet"><div class="bot">Indoor · easy</div><h4>Native house plants</h4><p>Hardy indoor natives that shrug off a forgetful week.</p><div class="gd-stock in"><span class="d"></span>In stock now</div></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="gd-wrap">
+      <section>
+        <div class="gd-split">
+          <img src="https://pub.hyperagent.com/api/published/pbf01KX13VTXQ_2DNM4SZESAJQ0WG0/7fef21ab-a4f5-4ca6-8b99-246eecef2a34.png" alt="Native fern detail">
+          <div>
+            <div class="gd-eyeb" style="text-align:left">Not just plants</div>
+            <h3>Advice, and a garden to match</h3>
+            <p>Twenty years on the same Oratia site means the team can look at your spot — sun, slope, soil — and tell you exactly what will thrive.</p>
+            <p>The rebuild puts that expertise online: plant-care guides, a "design my native border" enquiry, and the landscaping service front and centre instead of buried in a nav bar.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="gd-band">
+      <h3>Reserve plants before you drive up</h3>
+      <p>A simple "hold these for me" button turns a scenic detour into a sure thing — and gives Gordons a reason to capture every regular's email.</p>
+      <a class="gd-cta" href="#" onclick="return false">Reserve &amp; collect →</a>
+    </div>
+
+    <div class="gd-wrap">
+      <section>
+        <div class="gd-quote">"Excellent selection of native plants, much cheaper than pretty much anywhere. Very knowledgeable staff — they have wheelbarrows instead of trolleys, and it's very hard to not fill one up."</div>
+        <div class="gd-qby">— verbatim Google review</div>
+      </section>
+    </div>
+
+    <div class="gd-foot">
+      Independent redesign concept — not affiliated with or endorsed by Gordons Nurseries.<br>
+      Real business · 4.8★ from 32 Google reviews · current site is a basic static page. Availability shown is an illustrative demo.
+    </div>
+  </section>
+
+  <!-- ============ 4 · STITCHES ALTERATIONS ============ -->
+  <section class="view" id="v-atelier" data-name="Stitches Alterations">
+    <div class="at-side">
+      <div class="vt">Stitches · Te Atatū</div>
+      <div class="no">est. 2003</div>
+    </div>
+    <div class="at-main">
+      <div class="at-hero">
+        <img src="https://pub.hyperagent.com/api/published/pbf01KX13VV64_FEVNJXE4M3RZDDH8/4cfe2659-d4ee-49c4-9148-06e35c4ca110.png" alt="Stitches atelier">
+        <div class="at-hs"></div>
+        <div class="at-heroin">
+          <div class="at-kick">Alterations · Repairs · Bridal</div>
+          <div class="at-name">Stitches <em>Alterations</em></div>
+          <div class="at-tag">Considered tailoring on Te Atatū Road — the same trusted hands since 2003.</div>
+        </div>
+      </div>
+
+      <div class="at-wrap">
+        <section>
+          <div class="at-eyeb">The workroom</div>
+          <div class="at-h">Made to fit, <em>made to last</em></div>
+          <p class="at-intro">Helen and Lynda take in, let out, hem and rescue — from a favourite pair of jeans to the wedding dress you can't afford to get wrong. The gap we'd close: there's no website at all, so every enquiry starts with a phone call and a guess at the price.</p>
+        </section>
+
+        <section style="padding-top:8px">
+          <div class="at-flow">
+            <div class="at-fstep"><div class="n">01</div><h5>Book online</h5><p>Pick a fitting time without playing phone tag.</p></div>
+            <div class="at-fstep"><div class="n">02</div><h5>Fitting</h5><p>Pinned and measured properly, in person.</p></div>
+            <div class="at-fstep"><div class="n">03</div><h5>The work</h5><p>Careful alterations, quoted before we start.</p></div>
+            <div class="at-fstep"><div class="n">04</div><h5>Collect</h5><p>A text when it's ready. It fits like it should.</p></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="at-price">
+        <div class="at-wrap">
+          <div class="at-eyeb" style="text-align:center;color:#e6cfa6">Typical alterations</div>
+          <div class="at-h" style="text-align:center;color:#eae5dd">Clear prices, up front</div>
+          <div class="at-plist">
+            <div class="at-prow"><span class="nm">Hem trousers or jeans<small>blind hem or original hem kept</small></span><span class="dots"></span><span class="pr">$25</span></div>
+            <div class="at-prow"><span class="nm">Take in a dress or shirt<small>side seams, refit through the body</small></span><span class="dots"></span><span class="pr">from $40</span></div>
+            <div class="at-prow"><span class="nm">Replace a zip<small>invisible or standard</small></span><span class="dots"></span><span class="pr">from $30</span></div>
+            <div class="at-prow"><span class="nm">Wedding dress refit<small>consultation, multiple fittings, pressing</small></span><span class="dots"></span><span class="pr">quoted</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="at-band">
+        <div class="at-quote">"I would trust the ladies with my wedding dress — Helen got it looking as good as new."</div>
+        <div class="at-qby">— verbatim Google review</div>
+        <br>
+        <a class="at-cta" href="#" onclick="return false">Book a fitting →</a>
+      </div>
+
+      <div class="at-foot">
+        Independent redesign concept — not affiliated with or endorsed by Stitches Alterations.<br>
+        Real business · 4.9★ from 46 Google reviews · currently no website (a quiet Facebook page). Prices shown are an illustrative demo.
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 5 · FUR-B-LUSCIOUS ============ -->
+  <section class="view" id="v-pet" data-name="Fur-B-Luscious Dog Salon" data-visit="https://fur-b-luscious.co.nz/">
+    <nav class="pw-nav">
+      <div class="pw-logo">Fur-B-<span>Luscious</span></div>
+      <div class="pw-navl"><a>Services</a><a>Gallery</a><a>About Sam</a><a class="pw-book" href="#pwbook">Book now</a></div>
+    </nav>
+
+    <div class="pw-wrap">
+      <div class="pw-hero">
+        <div class="pw-hx">
+          <span class="tag">🐾 No fur kid too big or small</span>
+          <h1>Grooming your dog will actually <span>look forward to</span></h1>
+          <p>Gentle, unhurried grooming in Avondale from Sam — 25 years of experience and a soft spot for the nervous ones.</p>
+          <div class="pw-hbtns"><a class="p" href="#pwbook">Book a groom →</a><a class="s">See services</a></div>
+        </div>
+        <div class="pw-himg"><div class="blob"></div>
+          <img src="https://pub.hyperagent.com/api/published/pbf01KX13VVHH_B6XPR12G3AMDY89S/ac471620-ee98-43cb-b2e3-aec1aa590cb3.png" alt="Freshly groomed dog">
+        </div>
+      </div>
+    </div>
+
+    <div class="pw-wrap">
+      <section>
+        <div class="pw-eyeb">What we offer</div>
+        <div class="pw-h">Groom, tidy &amp; pamper</div>
+        <div class="pw-svc">
+          <div class="pw-scard"><div class="ic">🛁</div><h4>Bath &amp; tidy</h4><p>Wash, blow-dry, nails &amp; a neaten-up.</p><div class="pr">from $55</div></div>
+          <div class="pw-scard"><div class="ic">✂️</div><h4>Full groom</h4><p>Breed-style clip, bath, the full works.</p><div class="pr">from $85</div></div>
+          <div class="pw-scard"><div class="ic">🐩</div><h4>Deshed &amp; dematt</h4><p>Gentle coat rescue for the fluffy ones.</p><div class="pr">from $70</div></div>
+          <div class="pw-scard"><div class="ic">🐕</div><h4>Puppy's first groom</h4><p>Calm, patient intro so it's never scary.</p><div class="pr">from $45</div></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="pw-wrap">
+      <section id="pwbook">
+        <div class="pw-booksec">
+          <div>
+            <h3>Book in 30 seconds</h3>
+            <p>The gap we'd close: right now booking means a form on a half-finished template. Here's the fix — a clean flow that fills the diary while Sam stays hands-on with the dogs.</p>
+            <ul class="pw-steps">
+              <li><span class="n">1</span> Pick your pup &amp; service</li>
+              <li><span class="n">2</span> Choose a day that suits</li>
+              <li><span class="n">3</span> Done — reminder texted the day before</li>
+            </ul>
+          </div>
+          <div class="pw-phone">
+            <div class="pw-screen">
+              <div class="pw-pbar">Book a groom 🐾</div>
+              <div class="pw-pbody">
+                <div class="lab">Service</div>
+                <span class="pw-chip on">Full groom</span><span class="pw-chip">Bath &amp; tidy</span><span class="pw-chip">Deshed</span>
+                <div class="lab">Pick a time — Fri</div>
+                <div class="pw-slot">9:30 am</div>
+                <div class="pw-slot on">11:00 am ✓</div>
+                <div class="pw-slot">1:30 pm</div>
+                <div class="pw-pbtn">Confirm booking</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="pw-wrap">
+      <section>
+        <div class="pw-quote">
+          <div class="st">★★★★★</div>
+          <p>"Super empathetic with our lads, especially our anxious rescue dog. Sam and the team are awesome — a great space and atmosphere for the fur babies too."</p>
+          <div class="by">— verbatim Google reviews</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="pw-foot">
+      Independent redesign concept — not affiliated with or endorsed by Fur-B-Luscious Dog Salon.<br>
+      Real business · 5.0★ from 99 Google reviews · current site is a thin template. Services &amp; booking shown are an illustrative demo.
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ---------- view-swap core ---------- */
+(function(){
+  var board=document.getElementById('board'),bar=document.getElementById('backbar'),
+      t=document.getElementById('backTitle'),v2=document.getElementById('backVisit'),last=0;
+  window.openView=function(id){var v=document.getElementById(id);if(!v)return;last=window.scrollY;
+    board.style.display='none';
+    document.querySelectorAll('.view').forEach(function(x){x.classList.remove('show')});
+    v.classList.add('show');bar.classList.add('show');
+    t.textContent=(v.dataset.name||'')+' — concept site';
+    if(v.dataset.visit){v2.href=v.dataset.visit;v2.style.display='';}else{v2.style.display='none';}
+    document.body.classList.add('viewing');window.scrollTo(0,0);};
+  window.closeView=function(){
+    document.querySelectorAll('.view').forEach(function(x){x.classList.remove('show')});
+    bar.classList.remove('show');board.style.display='';
+    document.body.classList.remove('viewing');window.scrollTo(0,last);};
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&document.body.classList.contains('viewing'))closeView();});
+})();
+
+/* ---------- Swanson Worx: speed-to-quote wizard ---------- */
+(function(){
+  var step=0, maxStep=4;
+  var svcWrap=document.getElementById('swServices');
+  // toggle service selection
+  svcWrap.querySelectorAll('.sw-opt').forEach(function(o){
+    o.addEventListener('click',function(){
+      o.classList.toggle('sel');
+      o.querySelector('.bx').textContent=o.classList.contains('sel')?'✓':'';
+    });
+  });
+  window.swDay=function(el){
+    el.parentNode.querySelectorAll('.sw-opt').forEach(function(o){
+      o.classList.remove('sel');o.querySelector('.bx').textContent='';});
+    el.classList.add('sel');el.querySelector('.bx').textContent='✓';
+  };
+  function money(n){return '$'+n.toFixed(2);}
+  function buildEstimate(){
+    var box=document.getElementById('swEst'); box.innerHTML='';
+    var total=0, any=false;
+    svcWrap.querySelectorAll('.sw-opt.sel').forEach(function(o){
+      any=true;
+      var name=o.querySelector('.ol').textContent;
+      var price=parseFloat(o.getAttribute('data-price'))||0;
+      total+=price;
+      var row=document.createElement('div');row.className='er';
+      row.innerHTML='<span>'+name+'</span><span class="v">'+(price?money(price):'incl.')+'</span>';
+      box.appendChild(row);
+    });
+    if(!any){
+      var r=document.createElement('div');r.className='er';
+      r.innerHTML='<span>Workshop assessment</span><span class="v">$95.00</span>';
+      box.appendChild(r);total=95;
+    }
+    var veh=document.getElementById('swVeh').value||'Your vehicle';
+    var vr=document.createElement('div');vr.className='er';
+    vr.innerHTML='<span style="color:#8b949c">Vehicle</span><span class="v">'+veh+'</span>';
+    box.appendChild(vr);
+    var tr=document.createElement('div');tr.className='tot';
+    tr.innerHTML='<span>Estimate total</span><span class="v">'+money(total)+'</span>';
+    box.appendChild(tr);
+    document.getElementById('swConfTot').textContent=money(total);
+  }
+  var labels={0:'Next →',1:'Choose a time →',2:'See my price →',3:'Confirm booking →'};
+  function render(){
+    document.querySelectorAll('#v-auto .sw-step').forEach(function(s){
+      s.classList.toggle('on', +s.getAttribute('data-step')===step);});
+    document.querySelectorAll('#v-auto .sw-prog i').forEach(function(i){
+      i.classList.toggle('on', +i.getAttribute('data-p')<=step);});
+    var bb=document.getElementById('swBack'), nb=document.getElementById('swNext');
+    if(step===3){buildEstimate();}
+    if(step===4){
+      nb.style.display='none';
+      bb.style.display='';bb.textContent='Start over';
+    } else {
+      nb.style.display='';nb.textContent=labels[step];
+      bb.textContent='Back';bb.style.display= step===0?'none':'';
+    }
+  }
+  window.swNext=function(){ if(step<maxStep){step++;render();} };
+  window.swPrev=function(){ if(step===maxStep){step=0;document.getElementById('swNext').style.display='';render();return;} if(step>0){step--;render();} };
+  render();
+})();
+</script>
+</body>
+</html>
