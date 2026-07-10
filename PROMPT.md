@@ -134,3 +134,73 @@ CSS essentials: `.view{display:none;min-height:100vh}` Â· `.view.show{display:
   </div>
 </article>
 ```
+
+---
+
+## Client Site Production Requirements
+
+The prospect dashboard and the concept demos are pitch artifacts. When a prospect
+becomes a client and we build their REAL website, that build must ALSO meet the
+requirements below. Keep the dashboard/prospect artifact separate from production
+client-site implementation unless a task specifically asks otherwise.
+
+### 1. SEO + machine-readable metadata
+- Every client-ready site must include clear title tags, meta descriptions,
+  canonical URLs, Open Graph/Twitter metadata, and JSON-LD.
+- Use LocalBusiness / HomeAndConstructionBusiness / the relevant business schema
+  where appropriate.
+- Add Service schema for service pages.
+- Metadata must be factual, location-aware, and must not overclaim.
+- Ratings / review counts may only be used when verified from public sources.
+
+### 2. Service page structure
+- For real client builds, do not leave all services only on the homepage.
+- Split primary services into dedicated service pages where the business has
+  distinct service categories.
+- Each service page should include:
+  - a service-specific H1
+  - clear intro copy
+  - benefits / use cases
+  - service area context
+  - a quote / booking CTA
+  - a canonical URL
+  - service-specific JSON-LD (Service schema)
+- Add and maintain sitemap.xml and robots.txt.
+- The sitemap must include the homepage, the service pages, and other indexable
+  public pages.
+
+### 3. Supabase Edge Function form backend
+- Client-ready quote / contact forms must NOT rely on mailto.
+- Use a Supabase Edge Function pattern for server-side form processing. The
+  function should:
+  - validate required fields
+  - reject honeypot spam
+  - store the inbound submission where applicable
+  - send an internal notification email via the existing SMTP routing
+  - optionally send a confirmation email to the customer
+  - return structured success / failure JSON
+  - never show success to the user unless the server confirms success
+- Use project-specific environment variable names for routing, e.g.
+  - CLIENT_INTERNAL_NOTIFICATION_EMAIL
+  - CLIENT_QUOTE_TEST_EMAIL
+- Do not hard-code secrets.
+- Deployment notes:
+  - supabase link --project-ref <project-ref>
+  - supabase functions deploy <function-name> --project-ref <project-ref>
+  - supabase secrets set <SECRET_NAME>=<value> --project-ref <project-ref>
+- Staging should route notifications to Mike / the test email first. Production
+  routing to the client only happens after approval.
+
+### 4. Hard constraints
+- Do not change SMTP infrastructure unless explicitly asked.
+- Do not invent env values.
+- Do not route live client notifications until approved.
+- Do not bolt form-sending into static HTML.
+- Keep the dashboard / prospect artifact separate from production client-site
+  implementation unless specifically requested.
+
+### Reference implementation
+painted-by-jess (github.com/captjreacher/painted-by-jess) is the working example
+of this pattern: a Supabase Edge Function (painted-by-jess-contact) processes the
+quote form with PBJ-prefixed env routing, staged to the test inbox before any live
+client routing. Use it as the template for future client builds.
