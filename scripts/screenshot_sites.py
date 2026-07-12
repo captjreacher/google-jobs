@@ -1,6 +1,6 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-screenshot_sites.py â€” capture REAL screenshots of businesses' current websites
+screenshot_sites.py — capture REAL screenshots of businesses' current websites
 for the "current site" preview tiles on the operator dashboard.
 
 WHY THIS APPROACH (learned the hard way):
@@ -24,7 +24,7 @@ IMPORTANT
 - ALWAYS view each saved PNG (Read tool) before embedding. Discard captures that
   are a Cloudflare "verify you are human" page, a 404, or blank.
 - Sites behind an INTERACTIVE Cloudflare gate cannot be captured by any automated
-  renderer. Do NOT fake it â€” use an honest "view live â†—" tile on that card.
+  renderer. Do NOT fake it — use an honest "view live ↗" tile on that card.
 """
 import sys, os, json, time, subprocess, re
 
@@ -75,8 +75,7 @@ def main():
         p, ok = grab(k, u, out_dir)
         sz = os.path.getsize(p) if os.path.exists(p) else 0
         print(f"{k}\t{'OK' if ok else 'FAILED'}\t{sz}B\t{u}")
-    print("DONE â€” VIEW each PNG before embedding; discard bot-check/404/blank captures.")
+    print("DONE — VIEW each PNG before embedding; discard bot-check/404/blank captures.")
 
 if __name__ == "__main__":
     main()
-
